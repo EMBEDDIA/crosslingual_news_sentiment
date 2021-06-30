@@ -1,5 +1,4 @@
 from bert_ml_sentiment_classifier import bert_train, bert_evaluate
-#from MLBertModelForClassification import MLBertModelForClassification
 from data_transform_overlapping import encode_labels, prepare_labeled_dataset, prepare_classification_head_dataset
 from ClassificationHead import ClassificationHead, TwoLayerFCNet
 
@@ -24,9 +23,6 @@ def crossvalidation_sampling():
     parser.add_argument("--cro_test_data_path",
                         required=True,
                         type=str)
-    #parser.add_argument("--eval_data_path",
-    #                    required=True,
-    #                    type=str)
     parser.add_argument("--output_dir",
                         required=True,
                         type=str)
@@ -78,10 +74,8 @@ def crossvalidation_sampling():
     print("Reading data...")
     df_data = pd.read_csv(args.train_data_path, sep="\t")
     data = df_data['data'].tolist()
-    #print(df_data['label'].tolist())
     label_set = sorted(list(set(df_data['label'].values)))
     labels = encode_labels(df_data['label'].tolist(), label_set)
-    #print(labels)
     num_labels = len(set(labels))
     acc = []
     f1 = []
@@ -113,19 +107,11 @@ def crossvalidation_sampling():
         print(output_subdir)
         if not os.path.exists(output_subdir):
             os.mkdir(output_subdir)
-        #print(output_dir)
-        #print(log_file)
-        #print(log_path)
 
         test_data = data[(floor(len(data) * i * 0.1)):(floor(len(data) * (i + 1) * 0.1))]
         test_labels = labels[floor((len(labels) * i * 0.1)):floor((len(labels) * (i + 1) * 0.1))]
         train_data = data[:floor((len(data) * i * 0.1))] + data[floor((len(data) * (i + 1) * 0.1)):]
         train_labels = labels[:floor((len(labels) * i * 0.1))] + labels[floor((len(labels) * (i + 1) * 0.1)):]
-        #print("Train data: %d" % len(train_data))
-        #print("Train labels: %d" % len(train_labels))
-        #print("Test data: %d" % len(test_data))
-        #print("Test labels: %d" % len(test_labels))
-        #print("Test labels: %d" % len(test_labels))
         train_data, eval_data, train_labels, eval_labels = train_test_split(train_data, train_labels,
                                                                     test_size=args.eval_split, random_state=42)
         print("Train label:")
@@ -134,8 +120,6 @@ def crossvalidation_sampling():
         print(train_data[0])
         train_dataloader = prepare_labeled_dataset(train_data, train_labels, tokenizer, args.max_len, args.batch_size)
         eval_dataloader = prepare_labeled_dataset(eval_data, eval_labels, tokenizer, args.max_len, args.batch_size)
-        #test_dataloader = cut_at_front_and_back(test_data, test_labels, tokenizer, args.max_len, args.batch_size)
-        #cro_test_dataloader = cut_at_front_and_back(cro_test_data, cro_test_labels, tokenizer, args.max_len, args.batch_size)
         _, __ = bert_train(model, device, train_dataloader, eval_dataloader, output_subdir, args.num_epochs,
                            args.warmup_proportion, args.weight_decay, args.learning_rate, args.adam_epsilon,
                            save_best=True)

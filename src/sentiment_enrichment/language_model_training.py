@@ -1,5 +1,4 @@
-from bert_ml_sentiment_classifier import bert_train_lm, bert_evaluate_lm
-#from MLBertModelForClassification import MLBertModelForClassification
+from bert_ml_sentiment_classifier import bert_train_lm
 from data_transform import encode_labels, prepare_data_for_language_modelling
 from BertSentimentPretraining import BertForSentimentPretraining
 from read_data import clean_train_set_paragraph
@@ -13,8 +12,6 @@ import numpy as np
 import random
 import argparse
 import os
-#import csv
-#from math import floor
 
 def sentiment_enrichment():
     parser = argparse.ArgumentParser()
@@ -22,29 +19,14 @@ def sentiment_enrichment():
     parser.add_argument("--train_data_path",
                         required=True,
                         type=str)
-    #parser.add_argument("--cro_test_data_path",
-    #                    required=True,
-    #                    type=str)
-    #parser.add_argument("--eval_data_path",
-    #                    required=True,
-    #                    type=str)
     parser.add_argument("--output_dir",
                         required=True,
                         type=str)
-    #parser.add_argument("--data_column",
-    #                    required=True,
-    #                    type=str)
-    #parser.add_argument("--label_column",
-    #                    required=True,
-    #                   type=str)
     parser.add_argument("--do_lower_case",
                         action='store_true')
     parser.add_argument("--eval_split",
                         default=0.1,
                         type=float)
-    #parser.add_argument("--test_split",
-    #                    default=0.1,
-    #                    type=float)
     parser.add_argument("--split_num",
                         default=2,
                         type=int)
@@ -85,7 +67,6 @@ def sentiment_enrichment():
     output_dir = os.path.join(args.output_dir, "sentiment_language_model")
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
-    #log_path = os.path.join(output_dir, "log")
 
     print("Reading data...")
     df_data_train = pd.read_csv(args.train_data_path, sep="\t")
@@ -111,8 +92,6 @@ def sentiment_enrichment():
                                                            args.batch_size)
     eval_dataloader = prepare_data_for_language_modelling(eval_data, eval_labels, tokenizer, args.max_len,
                                                           args.batch_size)
-    #test_dataloader = cut_at_length(test_data, test_labels, tokenizer, args.max_len, args.batch_size)
-    #cro_test_dataloader = cut_at_length(cro_test_data, cro_test_labels, tokenizer, args.max_len, args.batch_size)
     tr_loss_track, num_iterations = bert_train_lm(model, device, train_dataloader, output_dir, args.num_epochs,
                        args.warmup_proportion, args.weight_decay, args.learning_rate, args.adam_epsilon,
                        save_best=True, eval_dataloader=eval_dataloader)

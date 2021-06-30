@@ -1,5 +1,4 @@
 from bert_ml_sentiment_classifier import bert_train, bert_evaluate
-#from MLBertModelForClassification import MLBertModelForClassification
 from data_transform import encode_labels, cut_at_front_and_back
 from read_data import read_croatian_data
 
@@ -12,10 +11,9 @@ import numpy as np
 import random
 import argparse
 import os
-import csv
 from math import floor
 
-def cut_at_front_and_back():
+def crossvalidation_front_back():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--train_data_path",
@@ -87,11 +85,8 @@ def cut_at_front_and_back():
     print("Reading data...")
     df_data = pd.read_csv(args.train_data_path, sep="\t")
     data = df_data['data'].tolist()
-    #print(df_data['label'].tolist())
     label_set = sorted(list(set(df_data['label'].values)))
     labels = encode_labels(df_data['label'].tolist(), label_set)
-    #print(labels)
-    #num_labels = len(set(labels))
 
     print("Preparing the croatian test data...")
     cro_test_data, cro_test_labels = read_croatian_data(args.cro_test_data_path)
@@ -110,23 +105,10 @@ def cut_at_front_and_back():
         model = BertForSequenceClassification.from_pretrained('bert-base-multilingual-cased',
                                                               num_labels=len(label_set))
 
-    #output_subdir = os.path.join(output_dir, str(i))
-    #print(output_subdir)
-    #if not os.path.exists(output_subdir):
-    #    os.mkdir(output_subdir)
-    #print(output_dir)
-    #print(log_file)
-    #print(log_path)
-
     test_data = data[(floor(len(data) * args.split_num * 0.1)):(floor(len(data) * (args.split_num + 1) * 0.1))]
     test_labels = labels[floor((len(labels) * args.split_num * 0.1)):floor((len(labels) * (args.split_num + 1) * 0.1))]
     train_data = data[:floor((len(data) * args.split_num * 0.1))] + data[floor((len(data) * (args.split_num + 1) * 0.1)):]
     train_labels = labels[:floor((len(labels) * args.split_num * 0.1))] + labels[floor((len(labels) * (args.split_num + 1) * 0.1)):]
-    #print("Train data: %d" % len(train_data))
-    #print("Train labels: %d" % len(train_labels))
-    #print("Test data: %d" % len(test_data))
-    #print("Test labels: %d" % len(test_labels))
-    #print("Test labels: %d" % len(test_labels))
     train_data, eval_data, train_labels, eval_labels = train_test_split(train_data, train_labels,
                                                                 test_size=args.eval_split, random_state=42)
     print("Train label:")
@@ -164,4 +146,4 @@ def cut_at_front_and_back():
 
 
 if __name__ == "__main__":
-    cut_at_front_and_back()
+    crossvalidation_front_back()

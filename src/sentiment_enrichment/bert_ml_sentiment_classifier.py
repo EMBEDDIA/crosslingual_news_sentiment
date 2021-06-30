@@ -1,9 +1,6 @@
 import torch
-#from torch.utils.data import TensorDataset, RandomSampler, DataLoader
-from transformers import BertTokenizer, BertConfig, BertForSequenceClassification, AdamW, get_linear_schedule_with_warmup
-#from metrics import get_metrics
+from transformers import AdamW, get_linear_schedule_with_warmup
 
-#from keras.preprocessing.sequence import pad_sequences
 from tqdm import tqdm, trange
 import os
 import sys
@@ -76,7 +73,6 @@ def bert_train(model, device, train_dataloader, eval_dataloader, output_dir, num
 
     if not save_best:
         model.save_pretrained(output_dir)
-        # tokenizer.save_pretrained(output_dir)
         torch.save(model.state_dict(), output_filename)
 
     return tr_loss_track, eval_metric_track
@@ -107,8 +103,7 @@ def bert_evaluate(model, eval_dataloader, device):
             true_labels.append(label)
             predictions.append(np.argmax(logit))
 
-    #print(predictions)
-    #print(true_labels)
+
     metrics = get_metrics(true_labels, predictions)
     return metrics
 
@@ -134,7 +129,7 @@ def bert_train_lm(model, device, train_dataloader, output_dir, num_epochs, warmu
     tr_loss_track = []
     num_iterations = 0
     early_stopping = 0
-    #eval_metric_track = []
+
     output_filename = os.path.join(output_dir, 'pytorch_model.bin')
     perplexity_history = float('inf')
 
@@ -166,8 +161,6 @@ def bert_train_lm(model, device, train_dataloader, output_dir, num_epochs, warmu
             del labels
             del mlm_labels
 
-        #print("Evaluating the model on the evaluation split...")
-        #eval_metric_track.append(metrics)
         if save_best:
             if eval_dataloader == None:
                 print("Please provide evaluation data.")
@@ -210,8 +203,6 @@ def bert_evaluate_lm(model, eval_dataloader, device):
     eval_loss = 0.0
     nb_eval_steps = 0
     model.eval()
-    #predictions = []
-    #true_labels = []
     data_iterator = tqdm(eval_dataloader, desc="Iteration")
     for step, batch in enumerate(data_iterator):
         input_ids, input_mask, labels, mlm_labels = batch
@@ -224,9 +215,6 @@ def bert_evaluate_lm(model, eval_dataloader, device):
             outputs = model(input_ids, attention_mask=input_mask, masked_lm_labels=mlm_labels,
                             next_sentence_label=labels)
             loss = outputs[0]
-            #print("Printing eval loss...")
-            #print(loss)
-            #print(type(loss))
             eval_loss += loss.detach().mean().item()
             del loss
         nb_eval_steps += 1
@@ -239,9 +227,6 @@ def bert_evaluate_lm(model, eval_dataloader, device):
     perplexity = torch.exp(torch.tensor(eval_loss))
     perplexity = perplexity.item()
 
-    #print(predictions)
-    #print(true_labels)
-    #metrics = get_metrics(true_labels, predictions)
     return perplexity
 
 
