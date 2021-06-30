@@ -66,7 +66,7 @@ def sentiment_enrichment():
 
     output_dir = os.path.join(args.output_dir, "sentiment_language_model")
     if not os.path.exists(output_dir):
-        os.mkdir(output_dir)
+        os.makedirs(output_dir)
 
     print("Reading data...")
     df_data_train = pd.read_csv(args.train_data_path, sep="\t")

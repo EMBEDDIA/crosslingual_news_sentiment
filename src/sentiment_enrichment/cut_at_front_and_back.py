@@ -22,9 +22,6 @@ def crossvalidation_front_back():
     parser.add_argument("--cro_test_data_path",
                         required=True,
                         type=str)
-    #parser.add_argument("--eval_data_path",
-    #                    required=True,
-    #                    type=str)
     parser.add_argument("--output_dir",
                         required=True,
                         type=str)
@@ -79,7 +76,7 @@ def crossvalidation_front_back():
     torch.backends.cudnn.benchmark = False
 
     if not os.path.exists(args.output_dir):
-        os.mkdir(args.output_dir)
+        os.makedirs(args.output_dir)
     log_path = os.path.join(args.output_dir, "log")
 
     print("Reading data...")

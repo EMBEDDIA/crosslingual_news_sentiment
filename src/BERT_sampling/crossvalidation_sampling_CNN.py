@@ -24,9 +24,6 @@ def crossvalidation_sampling():
     parser.add_argument("--cro_test_data_path",
                         required=True,
                         type=str)
-    #parser.add_argument("--eval_data_path",
-    #                    required=True,
-    #                    type=str)
     parser.add_argument("--output_dir",
                         required=True,
                         type=str)
@@ -72,7 +69,7 @@ def crossvalidation_sampling():
 
     output_dir = os.path.join(args.output_dir, "sampling_CNN")
     if not os.path.exists(output_dir):
-        os.mkdir(output_dir)
+        os.makedirs(output_dir)
     log_path = os.path.join(output_dir, "log")
 
     print("Reading data...")

@@ -57,7 +57,7 @@ def crossvalidation_sampling():
     args = parser.parse_args()
 
     if not os.path.exists(args.output_dir):
-        os.mkdir(args.output_dir)
+        os.makedirs(args.output_dir)
 
     print("Setting the random seed...")
     random.seed(42)
@@ -96,7 +96,7 @@ def crossvalidation_sampling():
     cro_test_labels = encode_labels(cro_test_labels, label_set)
 
 
-    for i in range(9, 10):
+    for i in range(10):
         print("Training model on the split number " + str(i) + "...")
         print("Finetuning BERT model...")
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

@@ -67,7 +67,7 @@ def length_512_crossvalidation():
 
     output_dir = os.path.join(args.output_dir, "length_512.py")
     if not os.path.exists(output_dir):
-        os.mkdir(output_dir)
+        os.makedirs(output_dir)
     log_path = os.path.join(output_dir, "log")
 
     print("Reading data...")
