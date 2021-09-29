@@ -20,10 +20,10 @@ def crossvalidation_front_and_back():
     parser.add_argument("--train_data_path",
                         required=True,
                         type=str)
-    parser.add_argument("--cro_test_data_path",
+    parser.add_argument("--output_dir",
                         required=True,
                         type=str)
-    parser.add_argument("--output_dir",
+    parser.add_argument("--cro_test_data_path",
                         required=True,
                         type=str)
     parser.add_argument("--eval_split",
@@ -83,18 +83,19 @@ def crossvalidation_front_and_back():
     cro_acc = []
     cro_f1 = []
 
-    print("Preparing the croatian test data...")
-    cro_test_data = []
-    cro_test_labels = []
-    with open(args.cro_test_data_path, 'r', encoding='utf-8') as f:
-        reader = csv.reader(f, delimiter="\t", quotechar='"')
-        for i, line in enumerate(reader):
-            if i == 0:
-                continue
-            cro_test_labels.append(line[0])
-            cro_data = line[1] + ". " + line[2]
-            cro_test_data.append(cro_data)
-    cro_test_labels = encode_labels(cro_test_labels, label_set)
+    if args.cro_test_data_path is not None:
+        print("Preparing the croatian test data...")
+        cro_test_data = []
+        cro_test_labels = []
+        with open(args.cro_test_data_path, 'r', encoding='utf-8') as f:
+            reader = csv.reader(f, delimiter="\t", quotechar='"')
+            for i, line in enumerate(reader):
+                if i == 0:
+                    continue
+                cro_test_labels.append(line[0])
+                cro_data = line[1] + ". " + line[2]
+                cro_test_data.append(cro_data)
+        cro_test_labels = encode_labels(cro_test_labels, label_set)
 
 
     for i in range(10):
@@ -121,7 +122,8 @@ def crossvalidation_front_and_back():
         train_dataloader = cut_at_front_and_back(train_data, train_labels, tokenizer, args.max_len, args.batch_size)
         eval_dataloader = cut_at_front_and_back(eval_data, eval_labels, tokenizer, args.max_len, args.batch_size)
         test_dataloader = cut_at_front_and_back(test_data, test_labels, tokenizer, args.max_len, args.batch_size)
-        cro_test_dataloader = cut_at_front_and_back(cro_test_data, cro_test_labels, tokenizer, args.max_len, args.batch_size)
+        if args.cro_test_data_path is not None:
+            cro_test_dataloader = cut_at_front_and_back(cro_test_data, cro_test_labels, tokenizer, args.max_len, args.batch_size)
         _, __ = bert_train(model, device, train_dataloader, eval_dataloader, output_subdir, args.num_epochs,
                            args.warmup_proportion, args.weight_decay, args.learning_rate, args.adam_epsilon,
                            save_best=True)
@@ -136,31 +138,35 @@ def crossvalidation_front_and_back():
         acc.append(metrics['accuracy'])
         f1.append(metrics['f1'])
 
-        print("Testing the trained model on the croatian test set...")
-        cro_metrics = bert_evaluate(model, cro_test_dataloader, device)
-        with open(log_path, 'a') as f:
-            f.write("Results for split nr. " + str(i) + " on cro test set:\n")
-            f.write("Acc: " + str(cro_metrics['accuracy']) + "\n")
-            f.write("F1: " + str(cro_metrics['f1']) + "\n")
-            f.write("\n")
-        cro_acc.append(cro_metrics['accuracy'])
-        cro_f1.append(cro_metrics['f1'])
+        if args.cro_test_data_path is not None:
+            print("Testing the trained model on the croatian test set...")
+            cro_metrics = bert_evaluate(model, cro_test_dataloader, device)
+            with open(log_path, 'a') as f:
+                f.write("Results for split nr. " + str(i) + " on cro test set:\n")
+                f.write("Acc: " + str(cro_metrics['accuracy']) + "\n")
+                f.write("F1: " + str(cro_metrics['f1']) + "\n")
+                f.write("\n")
+            cro_acc.append(cro_metrics['accuracy'])
+            cro_f1.append(cro_metrics['f1'])
 
 
     avg_acc = np.mean(acc)
     avg_f1 = np.mean(f1)
-    avg_cro_acc = np.mean(cro_acc)
-    avg_cro_f1 = np.mean(cro_f1)
+    if args.cro_test_data_path is not None:
+        avg_cro_acc = np.mean(cro_acc)
+        avg_cro_f1 = np.mean(cro_f1)
     print("Avg. acc: " + str(avg_acc))
     print("Avg. F1: " + str(avg_f1))
-    print("Avg. acc on cro test set: " + str(avg_cro_acc))
-    print("Avg. f1 on cro test set: " + str(avg_cro_f1))
+    if args.cro_test_data_path is not None:
+        print("Avg. acc on cro test set: " + str(avg_cro_acc))
+        print("Avg. f1 on cro test set: " + str(avg_cro_f1))
     print("Writing the results...")
     with open(log_path, 'a') as f:
         f.write("Avg. acc: " + str(avg_acc) + "\n")
         f.write("Avg. F1: " + str(avg_f1) + "\n")
-        f.write("Avg. acc on cro test set: " + str(avg_cro_acc) + "\n")
-        f.write("Avg. f1 on cro test set: " + str(avg_cro_f1) + "\n")
+        if args.cro_test_data_path is not None:
+            f.write("Avg. acc on cro test set: " + str(avg_cro_acc) + "\n")
+            f.write("Avg. f1 on cro test set: " + str(avg_cro_f1) + "\n")
         f.write("\n")
     print("Done.")
 

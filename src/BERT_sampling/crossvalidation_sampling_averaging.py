@@ -20,11 +20,10 @@ def crossvalidation_sampling():
     parser.add_argument("--train_data_path",
                         required=True,
                         type=str)
-    parser.add_argument("--cro_test_data_path",
-                        required=True,
-                        type=str)
     parser.add_argument("--output_dir",
                         required=True,
+                        type=str)
+    parser.add_argument("--cro_test_data_path",
                         type=str)
     parser.add_argument("--eval_split",
                         default=0.2,
@@ -82,18 +81,19 @@ def crossvalidation_sampling():
     cro_acc = []
     cro_f1 = []
 
-    print("Preparing the croatian test data...")
-    cro_test_data = []
-    cro_test_labels = []
-    with open(args.cro_test_data_path, 'r', encoding='utf-8') as f:
-        reader = csv.reader(f, delimiter="\t", quotechar='"')
-        for i, line in enumerate(reader):
-            if i == 0:
-                continue
-            cro_test_labels.append(line[0])
-            cro_data = line[1] + ". " + line[2]
-            cro_test_data.append(cro_data)
-    cro_test_labels = encode_labels(cro_test_labels, label_set)
+    if args.cro_test_data_path is not None:
+        print("Preparing the croatian test data...")
+        cro_test_data = []
+        cro_test_labels = []
+        with open(args.cro_test_data_path, 'r', encoding='utf-8') as f:
+            reader = csv.reader(f, delimiter="\t", quotechar='"')
+            for i, line in enumerate(reader):
+                if i == 0:
+                    continue
+                cro_test_labels.append(line[0])
+                cro_data = line[1] + ". " + line[2]
+                cro_test_data.append(cro_data)
+        cro_test_labels = encode_labels(cro_test_labels, label_set)
 
 
     for i in range(10):
@@ -153,33 +153,37 @@ def crossvalidation_sampling():
         acc.append(metrics['accuracy'])
         f1.append(metrics['f1'])
 
-        print("Testing the trained model on the croatian test set...")
-        cro_test_dataloader = prepare_classification_head_dataset_averaging(cro_test_data, cro_test_labels, model, tokenizer,
-                                                                  device, args.max_len, args.batch_size)
-        cro_metrics = classification_head.evaluate(cro_test_dataloader)
-        with open(log_path, 'a') as f:
-            f.write("Results for split nr. " + str(i) + " on cro test set:\n")
-            f.write("Acc: " + str(cro_metrics['accuracy']) + "\n")
-            f.write("F1: " + str(cro_metrics['f1']) + "\n")
-            f.write("\n")
-        cro_acc.append(cro_metrics['accuracy'])
-        cro_f1.append(cro_metrics['f1'])
+        if args.cro_test_data_path is not None:
+            print("Testing the trained model on the croatian test set...")
+            cro_test_dataloader = prepare_classification_head_dataset_averaging(cro_test_data, cro_test_labels, model, tokenizer,
+                                                                      device, args.max_len, args.batch_size)
+            cro_metrics = classification_head.evaluate(cro_test_dataloader)
+            with open(log_path, 'a') as f:
+                f.write("Results for split nr. " + str(i) + " on cro test set:\n")
+                f.write("Acc: " + str(cro_metrics['accuracy']) + "\n")
+                f.write("F1: " + str(cro_metrics['f1']) + "\n")
+                f.write("\n")
+            cro_acc.append(cro_metrics['accuracy'])
+            cro_f1.append(cro_metrics['f1'])
 
 
     avg_acc = np.mean(acc)
     avg_f1 = np.mean(f1)
-    avg_cro_acc = np.mean(cro_acc)
-    avg_cro_f1 = np.mean(cro_f1)
+    if args.cro_test_data_path is not None:
+        avg_cro_acc = np.mean(cro_acc)
+        avg_cro_f1 = np.mean(cro_f1)
     print("Avg. acc: " + str(avg_acc))
     print("Avg. F1: " + str(avg_f1))
-    print("Avg. acc on cro test set: " + str(avg_cro_acc))
-    print("Avg. f1 on cro test set: " + str(avg_cro_f1))
+    if args.cro_test_data_path is not None:
+        print("Avg. acc on cro test set: " + str(avg_cro_acc))
+        print("Avg. f1 on cro test set: " + str(avg_cro_f1))
     print("Writing the results...")
     with open(log_path, 'a') as f:
         f.write("Avg. acc: " + str(avg_acc) + "\n")
         f.write("Avg. F1: " + str(avg_f1) + "\n")
-        f.write("Avg. acc on cro test set: " + str(avg_cro_acc) + "\n")
-        f.write("Avg. f1 on cro test set: " + str(avg_cro_f1) + "\n")
+        if args.cro_test_data_path is not None:
+            f.write("Avg. acc on cro test set: " + str(avg_cro_acc) + "\n")
+            f.write("Avg. f1 on cro test set: " + str(avg_cro_f1) + "\n")
         f.write("\n")
     print("Done.")
 
